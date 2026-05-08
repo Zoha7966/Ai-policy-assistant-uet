@@ -20,9 +20,9 @@ def preprocess_input(text: str) -> str:
     text = " ".join(text.split())
     return text.strip()
 
-def validate_input(text: str, min_length: int = 5, max_chars: int = 50000) -> tuple[bool, str]:
+def validate_input(text: str, min_length: int = 5, max_chars: int = 500000) -> tuple[bool, str]:
     if not text or len(text.strip()) < min_length:
         return False, f"Input is too short. Please provide at least {min_length} characters."
     if len(text) > max_chars:
-        return False, f"Input is too long ({len(text)} characters). Please keep it under {max_chars} characters."
+        return False, f"Input is too long ({len(text)} characters). Please keep it under {max_chars:,} characters."
     return True, ""
