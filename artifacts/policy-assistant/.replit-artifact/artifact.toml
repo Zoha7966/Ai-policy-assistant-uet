@@ -1,0 +1,17 @@
+kind = "web"
+previewPath = "/"
+title = "AI Policy Assistant"
+version = "1.0.0"
+id = "artifacts/policy-assistant"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "Policy Assistant"
+paths = ["/"]
+localPort = 5000
+
+[services.development]
+run = "cd /home/runner/workspace/artifacts/policy-assistant && streamlit run app.py"
