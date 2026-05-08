@@ -2,6 +2,7 @@ import streamlit as st
 import fitz  # PyMuPDF
 import sys
 import os
+from datetime import datetime
 
 sys.path.insert(0, os.path.dirname(__file__))
 
@@ -13,6 +14,7 @@ from utils.prompts import (
     EVALUATION_PROMPT,
 )
 from utils.parser import parse_response, preprocess_input, validate_input
+from utils.pdf_export import generate_pdf
 
 st.set_page_config(
     page_title="AI Policy Analysis Assistant",
@@ -37,6 +39,12 @@ TASK_DESCRIPTIONS = {
     "evaluate": "Identify a policy's strengths, weaknesses, risks, and real-world consequences.",
 }
 
+for key in ["result_1", "result_2", "result_3", "result_4",
+            "input_1", "input_2", "input_3a", "input_3b", "input_4"]:
+    if key not in st.session_state:
+        st.session_state[key] = ""
+
+
 def extract_pdf_text(uploaded_file) -> str:
     pdf_bytes = uploaded_file.read()
     doc = fitz.open(stream=pdf_bytes, filetype="pdf")
@@ -45,6 +53,7 @@ def extract_pdf_text(uploaded_file) -> str:
         text += page.get_text()
     doc.close()
     return text
+
 
 def run_analysis(task: str, policy_input: str, policy_2: str = "") -> str:
     if task == "summarize":
@@ -57,8 +66,32 @@ def run_analysis(task: str, policy_input: str, policy_2: str = "") -> str:
         prompt = EVALUATION_PROMPT.format(policy_input=policy_input)
     else:
         prompt = SUMMARIZATION_PROMPT.format(policy_input=policy_input)
-
     return call_llm(prompt)
+
+
+def show_download_button(result_text: str, task_key: str, policy_input: str, key_suffix: str):
+    task_label = TASK_LABELS[task_key].replace("📋 ", "").replace("🔍 ", "").replace("⚖️ ", "").replace("🔬 ", "")
+    short_input = policy_input[:60].strip().replace("\n", " ")
+    title = short_input if short_input else task_label
+    filename = f"policy_analysis_{task_key}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+
+    try:
+        pdf_bytes = generate_pdf(
+            title=title,
+            task_label=TASK_LABELS[task_key],
+            content=result_text,
+            policy_input=policy_input,
+        )
+        st.download_button(
+            label="⬇️ Download as PDF",
+            data=pdf_bytes,
+            file_name=filename,
+            mime="application/pdf",
+            key=f"dl_{key_suffix}",
+        )
+    except Exception as e:
+        st.warning(f"PDF export unavailable: {str(e)}")
+
 
 with st.sidebar:
     st.header("How to Use")
@@ -66,6 +99,7 @@ with st.sidebar:
 1. **Select a function** from the tabs above
 2. **Enter a policy name** or **upload a PDF**
 3. Click **Analyze** to get AI-powered insights
+4. **Download** the result as a formatted PDF
     """)
     st.divider()
     st.subheader("Four Core Functions")
@@ -90,6 +124,7 @@ tab1, tab2, tab3, tab4 = st.tabs([
     "🔬 Critical Evaluation",
 ])
 
+# ── Tab 1: Summarization ──────────────────────────────────────────────────────
 with tab1:
     st.subheader("Policy Summarization")
     st.caption(TASK_DESCRIPTIONS["summarize"])
@@ -126,11 +161,21 @@ with tab1:
                 try:
                     raw = run_analysis("summarize", processed)
                     result = parse_response(raw, "summarize")
-                    st.divider()
-                    st.markdown(result["summary"])
+                    st.session_state["result_1"] = result["summary"]
+                    st.session_state["input_1"] = processed
                 except Exception as e:
                     st.error(f"Analysis failed: {str(e)}")
 
+    if st.session_state["result_1"]:
+        st.divider()
+        st.markdown(st.session_state["result_1"])
+        st.divider()
+        show_download_button(
+            st.session_state["result_1"], "summarize",
+            st.session_state["input_1"], "1"
+        )
+
+# ── Tab 2: Plain-Language Explanation ────────────────────────────────────────
 with tab2:
     st.subheader("Plain-Language Explanation")
     st.caption(TASK_DESCRIPTIONS["explain"])
@@ -167,11 +212,21 @@ with tab2:
                 try:
                     raw = run_analysis("explain", processed)
                     result = parse_response(raw, "explain")
-                    st.divider()
-                    st.markdown(result["plain_language"])
+                    st.session_state["result_2"] = result["plain_language"]
+                    st.session_state["input_2"] = processed
                 except Exception as e:
                     st.error(f"Explanation failed: {str(e)}")
 
+    if st.session_state["result_2"]:
+        st.divider()
+        st.markdown(st.session_state["result_2"])
+        st.divider()
+        show_download_button(
+            st.session_state["result_2"], "explain",
+            st.session_state["input_2"], "2"
+        )
+
+# ── Tab 3: Comparative Analysis ───────────────────────────────────────────────
 with tab3:
     st.subheader("Comparative Analysis")
     st.caption(TASK_DESCRIPTIONS["compare"])
@@ -238,11 +293,23 @@ with tab3:
                 try:
                     raw = run_analysis("compare", p1, p2)
                     result = parse_response(raw, "compare")
-                    st.divider()
-                    st.markdown(result["comparison"])
+                    st.session_state["result_3"] = result["comparison"]
+                    st.session_state["input_3a"] = p1
+                    st.session_state["input_3b"] = p2
                 except Exception as e:
                     st.error(f"Comparison failed: {str(e)}")
 
+    if st.session_state["result_3"]:
+        st.divider()
+        st.markdown(st.session_state["result_3"])
+        st.divider()
+        combined_input = f"{st.session_state['input_3a'][:40]} vs {st.session_state['input_3b'][:40]}"
+        show_download_button(
+            st.session_state["result_3"], "compare",
+            combined_input, "3"
+        )
+
+# ── Tab 4: Critical Evaluation ────────────────────────────────────────────────
 with tab4:
     st.subheader("Critical Evaluation")
     st.caption(TASK_DESCRIPTIONS["evaluate"])
@@ -279,10 +346,19 @@ with tab4:
                 try:
                     raw = run_analysis("evaluate", processed)
                     result = parse_response(raw, "evaluate")
-                    st.divider()
-                    st.markdown(result["critical_analysis"])
+                    st.session_state["result_4"] = result["critical_analysis"]
+                    st.session_state["input_4"] = processed
                 except Exception as e:
                     st.error(f"Evaluation failed: {str(e)}")
+
+    if st.session_state["result_4"]:
+        st.divider()
+        st.markdown(st.session_state["result_4"])
+        st.divider()
+        show_download_button(
+            st.session_state["result_4"], "evaluate",
+            st.session_state["input_4"], "4"
+        )
 
 st.divider()
 st.caption("AI Policy Analysis & Comparison Assistant · Developed for AI Course Assignment · UET Taxila · Department of Software Engineering")
