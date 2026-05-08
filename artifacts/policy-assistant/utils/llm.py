@@ -9,7 +9,7 @@ def get_client():
     if base_url:
         client = genai.Client(
             api_key=api_key,
-            http_options=types.HttpOptions(base_url=base_url, api_version="v1")
+            http_options=types.HttpOptions(base_url=base_url, api_version="")
         )
     else:
         client = genai.Client(api_key=api_key)
