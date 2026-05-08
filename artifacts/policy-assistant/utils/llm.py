@@ -5,15 +5,15 @@ from google.genai import types
 def get_client():
     api_key = os.environ.get("AI_INTEGRATIONS_GEMINI_API_KEY", "dummy")
     base_url = os.environ.get("AI_INTEGRATIONS_GEMINI_BASE_URL")
-    
+
     if base_url:
         client = genai.Client(
             api_key=api_key,
-            http_options=types.HttpOptions(base_url=base_url)
+            http_options=types.HttpOptions(base_url=base_url, api_version="v1")
         )
     else:
         client = genai.Client(api_key=api_key)
-    
+
     return client
 
 def call_llm(prompt: str, temperature: float = 0.4) -> str:
