@@ -40,10 +40,17 @@ TASK_DESCRIPTIONS = {
     "evaluate": "Identify a policy's strengths, weaknesses, risks, and real-world consequences.",
 }
 
+# Session state init
 for key in ["result_1", "result_2", "result_3", "result_4",
             "input_1", "input_2", "input_3a", "input_3b", "input_4"]:
     if key not in st.session_state:
         st.session_state[key] = ""
+
+if "history" not in st.session_state:
+    st.session_state["history"] = []
+
+if "history_view" not in st.session_state:
+    st.session_state["history_view"] = None
 
 
 def extract_pdf_text(uploaded_file) -> str:
@@ -54,6 +61,32 @@ def extract_pdf_text(uploaded_file) -> str:
         text += page.get_text()
     doc.close()
     return text
+
+
+def settings_badge(opts: dict) -> str:
+    parts = []
+    if opts.get("key_insights"):
+        parts.append("Top 5 Insights")
+    elif opts.get("mode", "Detailed") != "Detailed":
+        parts.append(opts["mode"] + " Mode")
+    if opts.get("compression", "Full") != "Full":
+        parts.append(opts["compression"] + " Length")
+    if opts.get("rank_by_importance"):
+        parts.append("Ranked")
+    return " · ".join(parts) if parts else "Detailed · Full"
+
+
+def save_to_history(task: str, input_text: str, result: str, opts: dict):
+    entry = {
+        "id": len(st.session_state["history"]),
+        "task": task,
+        "label": TASK_LABELS[task],
+        "input_preview": input_text[:80].strip().replace("\n", " "),
+        "result": result,
+        "settings": settings_badge(opts),
+        "timestamp": datetime.now().strftime("%b %d, %H:%M"),
+    }
+    st.session_state["history"].insert(0, entry)
 
 
 def run_analysis(task: str, policy_input: str, policy_2: str = "", options: dict = None) -> str:
@@ -135,7 +168,6 @@ with st.sidebar:
         help="Sort all points so critical national goals come first and minor details come last.",
     )
 
-    # Show active settings summary
     active = []
     if key_insights_only:
         active.append("Top 5 insights")
@@ -150,6 +182,30 @@ with st.sidebar:
 
     st.divider()
 
+    # ── History Panel ────────────────────────────────────────────────────────
+    history = st.session_state["history"]
+    col_h, col_c = st.columns([3, 1])
+    with col_h:
+        st.subheader(f"📚 History ({len(history)})")
+    with col_c:
+        if history:
+            if st.button("Clear", key="clear_history", help="Remove all saved analyses"):
+                st.session_state["history"] = []
+                st.session_state["history_view"] = None
+                st.rerun()
+
+    if not history:
+        st.caption("Your analyses will appear here after you run them.")
+    else:
+        for entry in history:
+            with st.expander(f"{entry['label']}  —  {entry['timestamp']}", expanded=False):
+                st.caption(f"**Input:** {entry['input_preview']}{'…' if len(entry['input_preview']) == 80 else ''}")
+                st.caption(f"**Settings:** {entry['settings']}")
+                if st.button("📂 Load result", key=f"load_{entry['id']}"):
+                    st.session_state["history_view"] = entry
+                    st.rerun()
+
+    st.divider()
     st.subheader("How to Use")
     st.markdown("""
 1. **Select a function** from the tabs above
@@ -175,6 +231,22 @@ output_options = {
     "compression": compression,
     "rank_by_importance": rank_by_importance,
 }
+
+# ── History Viewer (shown above tabs when a result is loaded) ─────────────────
+if st.session_state["history_view"]:
+    view = st.session_state["history_view"]
+    st.info(
+        f"**Viewing from history:** {view['label']}  ·  {view['timestamp']}  ·  Settings: {view['settings']}"
+    )
+    col_dismiss, _ = st.columns([1, 5])
+    with col_dismiss:
+        if st.button("✕ Dismiss", key="dismiss_history"):
+            st.session_state["history_view"] = None
+            st.rerun()
+    st.markdown(view["result"])
+    st.divider()
+    show_download_button(view["result"], view["task"], view["input_preview"], "hist")
+    st.divider()
 
 tab1, tab2, tab3, tab4 = st.tabs([
     "📋 Summarization",
@@ -222,6 +294,7 @@ with tab1:
                     result = parse_response(raw, "summarize")
                     st.session_state["result_1"] = result["summary"]
                     st.session_state["input_1"] = processed
+                    save_to_history("summarize", processed, result["summary"], output_options)
                 except Exception as e:
                     st.error(f"Analysis failed: {str(e)}")
 
@@ -273,6 +346,7 @@ with tab2:
                     result = parse_response(raw, "explain")
                     st.session_state["result_2"] = result["plain_language"]
                     st.session_state["input_2"] = processed
+                    save_to_history("explain", processed, result["plain_language"], output_options)
                 except Exception as e:
                     st.error(f"Explanation failed: {str(e)}")
 
@@ -355,6 +429,8 @@ with tab3:
                     st.session_state["result_3"] = result["comparison"]
                     st.session_state["input_3a"] = p1
                     st.session_state["input_3b"] = p2
+                    combined = f"{p1[:40]} vs {p2[:40]}"
+                    save_to_history("compare", combined, result["comparison"], output_options)
                 except Exception as e:
                     st.error(f"Comparison failed: {str(e)}")
 
@@ -407,6 +483,7 @@ with tab4:
                     result = parse_response(raw, "evaluate")
                     st.session_state["result_4"] = result["critical_analysis"]
                     st.session_state["input_4"] = processed
+                    save_to_history("evaluate", processed, result["critical_analysis"], output_options)
                 except Exception as e:
                     st.error(f"Evaluation failed: {str(e)}")
 
