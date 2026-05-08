@@ -78,7 +78,7 @@ def show_download_button(result_text: str, task_key: str, policy_input: str, key
     try:
         pdf_bytes = generate_pdf(
             title=title,
-            task_label=TASK_LABELS[task_key],
+            task_label=task_label,
             content=result_text,
             policy_input=policy_input,
         )
