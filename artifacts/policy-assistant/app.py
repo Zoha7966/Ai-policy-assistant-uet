@@ -295,6 +295,7 @@ with tab1:
                     st.session_state["result_1"] = result["summary"]
                     st.session_state["input_1"] = processed
                     save_to_history("summarize", processed, result["summary"], output_options)
+                    st.rerun()
                 except Exception as e:
                     st.error(f"Analysis failed: {str(e)}")
 
@@ -347,6 +348,7 @@ with tab2:
                     st.session_state["result_2"] = result["plain_language"]
                     st.session_state["input_2"] = processed
                     save_to_history("explain", processed, result["plain_language"], output_options)
+                    st.rerun()
                 except Exception as e:
                     st.error(f"Explanation failed: {str(e)}")
 
@@ -431,6 +433,7 @@ with tab3:
                     st.session_state["input_3b"] = p2
                     combined = f"{p1[:40]} vs {p2[:40]}"
                     save_to_history("compare", combined, result["comparison"], output_options)
+                    st.rerun()
                 except Exception as e:
                     st.error(f"Comparison failed: {str(e)}")
 
@@ -484,6 +487,7 @@ with tab4:
                     st.session_state["result_4"] = result["critical_analysis"]
                     st.session_state["input_4"] = processed
                     save_to_history("evaluate", processed, result["critical_analysis"], output_options)
+                    st.rerun()
                 except Exception as e:
                     st.error(f"Evaluation failed: {str(e)}")
 
