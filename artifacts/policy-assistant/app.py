@@ -12,6 +12,7 @@ from utils.prompts import (
     EXPLANATION_PROMPT,
     COMPARISON_PROMPT,
     EVALUATION_PROMPT,
+    build_prompt_modifiers,
 )
 from utils.parser import parse_response, preprocess_input, validate_input
 from utils.pdf_export import generate_pdf
@@ -55,17 +56,25 @@ def extract_pdf_text(uploaded_file) -> str:
     return text
 
 
-def run_analysis(task: str, policy_input: str, policy_2: str = "") -> str:
+def run_analysis(task: str, policy_input: str, policy_2: str = "", options: dict = None) -> str:
+    opts = options or {}
+    modifiers = build_prompt_modifiers(
+        mode=opts.get("mode", "Detailed"),
+        key_insights=opts.get("key_insights", False),
+        compression=opts.get("compression", "Full"),
+        rank_by_importance=opts.get("rank_by_importance", False),
+    )
+
     if task == "summarize":
-        prompt = SUMMARIZATION_PROMPT.format(policy_input=policy_input)
+        prompt = SUMMARIZATION_PROMPT.format(policy_input=policy_input) + modifiers
     elif task == "explain":
-        prompt = EXPLANATION_PROMPT.format(policy_input=policy_input)
+        prompt = EXPLANATION_PROMPT.format(policy_input=policy_input) + modifiers
     elif task == "compare":
-        prompt = COMPARISON_PROMPT.format(policy_1=policy_input, policy_2=policy_2)
+        prompt = COMPARISON_PROMPT.format(policy_1=policy_input, policy_2=policy_2) + modifiers
     elif task == "evaluate":
-        prompt = EVALUATION_PROMPT.format(policy_input=policy_input)
+        prompt = EVALUATION_PROMPT.format(policy_input=policy_input) + modifiers
     else:
-        prompt = SUMMARIZATION_PROMPT.format(policy_input=policy_input)
+        prompt = SUMMARIZATION_PROMPT.format(policy_input=policy_input) + modifiers
     return call_llm(prompt)
 
 
@@ -93,20 +102,62 @@ def show_download_button(result_text: str, task_key: str, policy_input: str, key
         st.warning(f"PDF export unavailable: {str(e)}")
 
 
+# ── Sidebar ───────────────────────────────────────────────────────────────────
 with st.sidebar:
-    st.header("How to Use")
+    st.header("⚙️ Output Settings")
+    st.caption("These settings apply to every analysis you run.")
+
+    summary_mode = st.radio(
+        "Summary Mode",
+        options=["Short", "Medium", "Detailed"],
+        index=2,
+        horizontal=True,
+        help="Short: 5–7 bullet points only · Medium: 4 sections max · Detailed: full structured output",
+    )
+
+    st.write("")
+    key_insights_only = st.toggle(
+        "Key Insights Only (Top 5)",
+        value=False,
+        help="Extract only the 5 most important policy goals, ranked by national impact. Overrides Summary Mode.",
+    )
+
+    compression = st.select_slider(
+        "Output Length",
+        options=["30%", "50%", "80%", "Full"],
+        value="Full",
+        help="Compress the AI output to a fraction of its full length.",
+    )
+
+    rank_by_importance = st.toggle(
+        "Rank by Importance",
+        value=False,
+        help="Sort all points so critical national goals come first and minor details come last.",
+    )
+
+    # Show active settings summary
+    active = []
+    if key_insights_only:
+        active.append("Top 5 insights")
+    elif summary_mode != "Detailed":
+        active.append(f"{summary_mode} mode")
+    if compression != "Full":
+        active.append(f"{compression} length")
+    if rank_by_importance:
+        active.append("ranked")
+    if active:
+        st.info("Active: " + " · ".join(active))
+
+    st.divider()
+
+    st.subheader("How to Use")
     st.markdown("""
 1. **Select a function** from the tabs above
 2. **Enter a policy name** or **upload a PDF**
-3. Click **Analyze** to get AI-powered insights
-4. **Download** the result as a formatted PDF
+3. Adjust **Output Settings** above as needed
+4. Click **Analyze** to get AI-powered insights
+5. **Download** the result as a formatted PDF
     """)
-    st.divider()
-    st.subheader("Four Core Functions")
-    for key, label in TASK_LABELS.items():
-        st.markdown(f"**{label}**")
-        st.caption(TASK_DESCRIPTIONS[key])
-        st.write("")
     st.divider()
     st.subheader("Sample Policies to Try")
     st.markdown("""
@@ -116,6 +167,14 @@ with st.sidebar:
 - Pakistan Economic Survey
 - National Health Vision 2016-2025
     """)
+
+# Collect output options once
+output_options = {
+    "mode": summary_mode,
+    "key_insights": key_insights_only,
+    "compression": compression,
+    "rank_by_importance": rank_by_importance,
+}
 
 tab1, tab2, tab3, tab4 = st.tabs([
     "📋 Summarization",
@@ -157,9 +216,9 @@ with tab1:
             st.error(err)
         else:
             processed = preprocess_input(policy_text_1)
-            with st.spinner("Analyzing policy... this may take a moment."):
+            with st.spinner("Analyzing policy… this may take a moment."):
                 try:
-                    raw = run_analysis("summarize", processed)
+                    raw = run_analysis("summarize", processed, options=output_options)
                     result = parse_response(raw, "summarize")
                     st.session_state["result_1"] = result["summary"]
                     st.session_state["input_1"] = processed
@@ -208,9 +267,9 @@ with tab2:
             st.error(err)
         else:
             processed = preprocess_input(policy_text_2)
-            with st.spinner("Simplifying policy language..."):
+            with st.spinner("Simplifying policy language…"):
                 try:
-                    raw = run_analysis("explain", processed)
+                    raw = run_analysis("explain", processed, options=output_options)
                     result = parse_response(raw, "explain")
                     st.session_state["result_2"] = result["plain_language"]
                     st.session_state["input_2"] = processed
@@ -289,9 +348,9 @@ with tab3:
         else:
             p1 = preprocess_input(policy_text_3a)
             p2 = preprocess_input(policy_text_3b)
-            with st.spinner("Comparing policies... this may take a moment."):
+            with st.spinner("Comparing policies… this may take a moment."):
                 try:
-                    raw = run_analysis("compare", p1, p2)
+                    raw = run_analysis("compare", p1, p2, options=output_options)
                     result = parse_response(raw, "compare")
                     st.session_state["result_3"] = result["comparison"]
                     st.session_state["input_3a"] = p1
@@ -342,9 +401,9 @@ with tab4:
             st.error(err)
         else:
             processed = preprocess_input(policy_text_4)
-            with st.spinner("Conducting critical evaluation..."):
+            with st.spinner("Conducting critical evaluation…"):
                 try:
-                    raw = run_analysis("evaluate", processed)
+                    raw = run_analysis("evaluate", processed, options=output_options)
                     result = parse_response(raw, "evaluate")
                     st.session_state["result_4"] = result["critical_analysis"]
                     st.session_state["input_4"] = processed

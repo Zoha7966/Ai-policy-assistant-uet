@@ -158,3 +158,46 @@ User Input:
 Respond with ONLY one of these exact words: summarize, explain, compare, evaluate
 
 If the intent is unclear, default to: summarize"""
+
+
+def build_prompt_modifiers(mode: str, key_insights: bool, compression: str, rank_by_importance: bool) -> str:
+    """Build an instruction block to append to any prompt based on user output settings."""
+    parts = []
+
+    if key_insights:
+        parts.append(
+            "KEY INSIGHTS ONLY: Extract and list ONLY the top 5 most critical policy goals or insights. "
+            "Number them 1–5 in strict order of national importance. Do not include any other sections or text."
+        )
+    elif mode == "Short":
+        parts.append(
+            "FORMAT — SHORT MODE: Respond with a single bulleted list of 5–7 key points only. "
+            "No section headings. No long explanations. One sentence per bullet. Be extremely concise."
+        )
+    elif mode == "Medium":
+        parts.append(
+            "FORMAT — MEDIUM MODE: Use a maximum of 4 sections. Keep each section to 3–4 bullet points. "
+            "Aim for under 400 words total. Drop minor supporting details."
+        )
+    # Detailed = full prompts as written, no additional constraint
+
+    if compression == "30%":
+        parts.append("LENGTH: Your entire response must not exceed 120 words.")
+    elif compression == "50%":
+        parts.append("LENGTH: Your entire response must not exceed 280 words.")
+    elif compression == "80%":
+        parts.append("LENGTH: Your entire response must not exceed 520 words.")
+    # Full = no word constraint
+
+    if rank_by_importance:
+        parts.append(
+            "RANKING: Order every point and every section by importance — highest national impact first. "
+            "Lead with the most critical goals and consequences. Place supporting mechanisms, timelines, "
+            "and minor administrative details at the end."
+        )
+
+    if not parts:
+        return ""
+
+    lines = "\n".join(f"  • {p}" for p in parts)
+    return f"\n\n---\n**STRICT OUTPUT INSTRUCTIONS (follow exactly):**\n{lines}"
