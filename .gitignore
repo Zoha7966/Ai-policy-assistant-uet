@@ -60,6 +60,9 @@ env/
 # Streamlit
 artifacts/policy-assistant/.streamlit/secrets.toml
 
-# Replit
+# Replit internal
 .cache/
 .local/
+.agents/
+attached_assets/
+.pythonlibs/

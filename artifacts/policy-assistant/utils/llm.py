@@ -19,7 +19,7 @@ def get_client():
 def call_llm(prompt: str, temperature: float = 0.4) -> str:
     client = get_client()
     response = client.models.generate_content(
-        model="gemini-2.5-pro",
+        model="gemini-2.5-flash",
         contents=prompt,
         config=types.GenerateContentConfig(
             temperature=temperature,

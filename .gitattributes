@@ -1,0 +1,25 @@
+# Tell GitHub Linguist to ignore all non-Python boilerplate
+# so the repo shows as a Python project
+
+# Node / TypeScript tooling
+*.ts linguist-vendored
+*.tsx linguist-vendored
+*.js linguist-vendored
+*.mjs linguist-vendored
+*.cjs linguist-vendored
+*.json linguist-vendored
+pnpm-lock.yaml linguist-vendored
+pnpm-workspace.yaml linguist-vendored
+tsconfig*.json linguist-vendored
+.npmrc linguist-vendored
+
+# Replit configuration
+.replit linguist-vendored
+*.toml linguist-vendored
+
+# Directories
+lib/** linguist-vendored
+scripts/** linguist-vendored
+artifacts/api-server/** linguist-vendored
+artifacts/mockup-sandbox/** linguist-vendored
+node_modules/** linguist-vendored
