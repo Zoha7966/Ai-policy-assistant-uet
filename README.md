@@ -10,6 +10,11 @@ Policy documents are often written in complex, bureaucratic language that is dif
 
 You can upload a PDF or paste any policy text and get an instant structured analysis in seconds.
 
+<img width="1919" height="839" alt="image" src="https://github.com/user-attachments/assets/16594525-90fb-440e-b274-4162e88d354f" />
+<img width="960" height="416" alt="image" src="https://github.com/user-attachments/assets/a38ed174-7b7b-4f65-b4bb-89c3b1830998" />
+<img width="956" height="407" alt="image" src="https://github.com/user-attachments/assets/703202ef-0800-444c-9e1d-3b2b52b94015" />
+<img width="960" height="416" alt="image" src="https://github.com/user-attachments/assets/0c11df3d-7a3e-434a-bc0b-2f185a5f9d85" />
+
 ## How the Agent Works
 
 1. **User submits input** — pastes policy text or uploads a PDF
@@ -22,14 +27,6 @@ You can upload a PDF or paste any policy text and get an instant structured anal
 8. **Display + Export** — result shown in UI, saved to session history, exportable as PDF
 
 ---
-<img width="1919" height="839" alt="image" src="https://github.com/user-attachments/assets/16594525-90fb-440e-b274-4162e88d354f" />
-<img width="960" height="416" alt="image" src="https://github.com/user-attachments/assets/a38ed174-7b7b-4f65-b4bb-89c3b1830998" />
-<img width="956" height="407" alt="image" src="https://github.com/user-attachments/assets/703202ef-0800-444c-9e1d-3b2b52b94015" />
-<img width="960" height="416" alt="image" src="https://github.com/user-attachments/assets/0c11df3d-7a3e-434a-bc0b-2f185a5f9d85" />
-
-
-
-
 
 ## Live Demo
 
@@ -156,10 +153,10 @@ Open `http://localhost:8501` in your browser.
 |-------|---------|
 | **Students** | Laiba Muzammal (23-SE-06) · Zoha Malik (23-SE-32) |
 | **Course** | Artificial Intelligence — 6th Semester |
-| **Instructor** | Ma'am Kanwal |
+| **Instructor** | Dr Kanwal Yousaf |
 | **Department** | Software Engineering |
 | **University** | University of Engineering & Technology, Taxila |
-| **Submitted** | May 2026 |
+| **Submitted** |June 8,2026 |
 
 ---
 
