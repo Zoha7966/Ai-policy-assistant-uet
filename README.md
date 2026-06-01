@@ -10,7 +10,26 @@ Policy documents are often written in complex, bureaucratic language that is dif
 
 You can upload a PDF or paste any policy text and get an instant structured analysis in seconds.
 
+## How the Agent Works
+
+1. **User submits input** — pastes policy text or uploads a PDF
+2. **Input validation** — the parser checks for empty or invalid input
+3. **Task detection** — user selects one of 4 task types (Summarize / Explain / Compare / Evaluate)
+4. **Output settings applied** — response mode and compression level are factored in
+5. **Prompt construction** — a task-specific prompt template is filled with the user's text
+6. **Gemini API call** — the constructed prompt is sent to Google Gemini 2.5 Pro
+7. **Response parsing** — output is cleaned and structured
+8. **Display + Export** — result shown in UI, saved to session history, exportable as PDF
+
 ---
+<img width="1919" height="839" alt="image" src="https://github.com/user-attachments/assets/16594525-90fb-440e-b274-4162e88d354f" />
+<img width="960" height="416" alt="image" src="https://github.com/user-attachments/assets/a38ed174-7b7b-4f65-b4bb-89c3b1830998" />
+<img width="956" height="407" alt="image" src="https://github.com/user-attachments/assets/703202ef-0800-444c-9e1d-3b2b52b94015" />
+<img width="960" height="416" alt="image" src="https://github.com/user-attachments/assets/0c11df3d-7a3e-434a-bc0b-2f185a5f9d85" />
+
+
+
+
 
 ## Live Demo
 
