@@ -15,7 +15,7 @@ You can upload a PDF or paste any policy text and get an instant structured anal
 ## Live Demo
 
 > Run the app directly — no installation needed:  
-> **[Launch App](https://ai-policy-assistant-uet.zohamalik66.repl.co)**
+> **[Launch App](https://ai-doc-reader--zohamalik66.replit.app)**
 
 ---
 
